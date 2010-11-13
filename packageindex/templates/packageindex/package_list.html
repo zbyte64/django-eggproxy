@@ -1,0 +1,16 @@
+{% extends "packageindex/base.html" %}
+
+{% block content %}
+<h1>{{application}}</h1>
+<ul>
+    {% for object in object_list %}
+    <li>
+        {% if object.md5 %}
+        <a href="{{object.get_counting_download_url}}#md5={{object.md5}}" rel="download">{{object}}</a>
+        {% else %}
+        <a href="{{object.get_counting_download_url}}" rel="download">{{object}}</a>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
