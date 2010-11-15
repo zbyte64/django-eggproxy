@@ -1,3 +1,5 @@
+import os
+
 # Django settings for library project.
 DEBUG = True
 
@@ -9,6 +11,7 @@ ADMIN_EMAIL = 'debug@cukerinteractive.com'
 
 MANAGERS = ADMINS
 TEMPLATE_DEBUG = DEBUG
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 SECRET_KEY = 'foo'
 
 # Local time zone for this installation. Choices can be found here:
@@ -63,8 +66,16 @@ INSTALLED_APPS = (
 
 STATIC_URL = '/static/'
 
+MEDIA_ROOT = '%s/public/media/' % PROJECT_DIR
+STATIC_ROOT = '%s/public/static/' % PROJECT_DIR
+WEB_ROOT = '%s/public/static/' % PROJECT_DIR
+
+TEMPLATE_DIRS = (
+    '%s/templates' % PROJECT_DIR,
+)
+
 DATABASE_ENGINE = 'sqlite3'
-DATABASE_NAME = 'mydb.sqlite'
+DATABASE_NAME = '%s/mydb.sqlite' % PROJECT_DIR
 DATABASE_USER = ''
 DATABASE_PASSWORD = ''
 DATABASE_HOST = ''
