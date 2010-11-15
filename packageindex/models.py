@@ -19,11 +19,24 @@ def create_or_update(model, **lookups):
     obj.save()
     return obj
 
+UPDATE_FREQUENCY = datetime.timedelta(days=1)
+
+class PackageIndexManager(models.Manager):
+    def refresh_stale_indexes(self):
+        stale = self.proxies().filter(last_update__lte=datetime.datetime.now()-UPDATE_FREQUENCY)
+        for package_index in stale:
+            stale.populate_applications()
+    
+    def proxies(self):
+        return self.exclude(url="")
+
 class PackageIndex(models.Model):
     name = models.CharField(max_length=50, unique=True)
     priority = models.IntegerField(default=0)
     url = models.URLField(blank=True)
     last_update = models.DateTimeField(default=datetime.datetime.now)
+    
+    objects = PackageIndexManager()
     
     def __unicode__(self):
         return self.name
@@ -55,7 +68,8 @@ class PackageIndex(models.Model):
                                                'md5':download['md5'],
                                                'source_download':download['location']},)
             packages.append(package)
-        #TODO any package not found in this list is inactive
+        #any package not found in this list is inactive
+        Package.objects.filter(application=application, package_index=self, active=True).exclude(pk__in=[pkg.pk for pkg in packages]).update(active=False)
         create_or_update(ApplicationUpdate,
                          application=application,
                          package_index=self,
@@ -91,8 +105,20 @@ class Application(models.Model):
         return packages
     
     def populate_packages(self):
-        for package_index in PackageIndex.objects.all():
+        for package_index in PackageIndex.objects.proxies():
             package_index.populate_packages(self)
+    
+    def refresh_stale_packages(self):
+        cutoff = datetime.datetime.now() - UPDATE_FREQUENCY
+        #TODO consolidate queries
+        for package_index in PackageIndex.objects.proxies():#.filter(applicationupdate__application=self, applicationupdate__last_update__lte=UPDATE_FREQUENCY)
+            try:
+                app_update = ApplicationUpdate.objects.get(application=self, package_index=package_index)
+            except ApplicationUpdate.DoesNotExist:
+                package_index.populate_packages(self)
+            else:
+                if app_update.last_update < UPDATE_FREQUENCY:
+                    package_index.populate_packages(self)
 
 class ApplicationUpdate(models.Model):
     application = models.ForeignKey(Application)

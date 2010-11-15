@@ -1,20 +1,22 @@
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.db.models import F
 from django.shortcuts import render_to_response, get_object_or_404
 
-from models import Application, Package
+from models import Application, Package, PackageIndex
 
 def application_list(request):
+    #TODO make on the fly refresh togable
+    PackageIndex.objects.refresh_stale_indexes()
     applications = Application.objects.all()
     return render_to_response('packageindex/application_list.html',
                               {'object_list':applications})
 
 def application_detail(request, name):
     application = get_object_or_404(Application, name=name)
+    #TODO make on the fly fetch packages togable
+    application.refresh_stale_packages()
     packages = application.package_dictionary()
     if not packages:
-        #TODO fetch packages
-        #application.populate_packages()
         return render_to_response('packageindex/package_list.html',
                                   {'object_list':list(),
                                    'application':application})
