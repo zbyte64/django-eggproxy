@@ -63,6 +63,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'packageindex',
     'guardian',
+    'staticfiles',
 )
 
 AUTHENTICATION_BACKENDS = (
