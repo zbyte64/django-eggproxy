@@ -14,11 +14,8 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program; see the file COPYING. If not, write to the
 ## Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-import os
-import tempfile
 import urllib2
 import urlparse
-import shutil
 from setuptools.package_index import PackageIndex as BasePackageIndex
 from setuptools.package_index import (
     egg_info_for_url,
@@ -33,7 +30,7 @@ from setuptools.package_index import (
 
 from pkg_resources import Requirement
 
-class PackageIndexScaper(BasePackageIndex):
+class PackageIndexScraper(BasePackageIndex):
     """
     """
 

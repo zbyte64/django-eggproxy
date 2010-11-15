@@ -6,7 +6,7 @@ from urlparse import urlparse
 from django.db import models
 from django.core.files import File
 
-from utils import PackageIndexScaper
+from utils import PackageIndexScraper
 
 def create_or_update(model, **lookups):
     update = lookups.pop('update', {})
@@ -42,7 +42,7 @@ class PackageIndex(models.Model):
         return self.name
     
     def get_scraper(self):
-        return PackageIndexScaper(index_url=self.url)
+        return PackageIndexScraper(index_url=self.url)
     
     def populate_applications(self):
         scraper = self.get_scraper()
