@@ -3,7 +3,13 @@
 {% block content %}
 <ul>
     {% for object in object_list %}
-    <li><a href="{{object.get_absolute_url}}">{{object}}</a></li>
+    <li>
+        {% if access_key %}
+        <a href="./{{object.name}}/">{{object}}</a>
+        {% else %}
+        <a href="{{object.get_absolute_url}}">{{object}}</a>
+        {% endif %}
+    </li>
     {% endfor %}
 </ul>
 {% endblock %}

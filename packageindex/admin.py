@@ -1,8 +1,17 @@
 from django.contrib import admin
 
-from models import PackageIndex, Application, Package
+from models import PackageIndex, Application, Package, PackageAccessKey
+
+from admin_permissions import UserPermissionInline, GroupPermissionInline
+
+class PackageAccessKeyAdmin(admin.ModelAdmin):
+    raw_id_fields = ['user']
+    list_display = ['user', 'access_key']
+
+admin.site.register(PackageAccessKey, PackageAccessKeyAdmin)
 
 class PackageIndexAdmin(admin.ModelAdmin):
+    inlines = [UserPermissionInline, GroupPermissionInline]
     actions = ['populate_index',
                'populate_packages']
     
@@ -34,3 +43,5 @@ class PackageAdmin(admin.ModelAdmin):
             package.populate_download()
 
 admin.site.register(Package, PackageAdmin)
+
+

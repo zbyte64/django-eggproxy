@@ -5,10 +5,18 @@
 <ul>
     {% for object in object_list %}
     <li>
+        {% if access_key %}
+        {% if object.md5 %}
+        <a href="../download/{{object.pk}}/#md5={{object.md5}}" rel="download">{{object}}</a>
+        {% else %}
+        <a href="../download/{{object.pk}}/" rel="download">{{object}}</a>
+        {% endif %}
+        {% else %}
         {% if object.md5 %}
         <a href="{{object.get_counting_download_url}}#md5={{object.md5}}" rel="download">{{object}}</a>
         {% else %}
         <a href="{{object.get_counting_download_url}}" rel="download">{{object}}</a>
+        {% endif %}
         {% endif %}
     </li>
     {% endfor %}

@@ -1,3 +1,6 @@
 *.pyc
 mydb.sqlite
-
+/bin
+/include
+/src
+/lib

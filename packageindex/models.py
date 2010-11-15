@@ -5,6 +5,7 @@ from urlparse import urlparse
 
 from django.db import models
 from django.core.files import File
+from django.contrib.auth.models import User
 
 from utils import PackageIndexScraper
 
@@ -21,6 +22,10 @@ def create_or_update(model, **lookups):
 
 UPDATE_FREQUENCY = datetime.timedelta(days=1)
 
+class PackageAccessKey(models.Model):
+    user = models.OneToOneField(User)
+    access_key = models.CharField(max_length=64, unique=True)
+
 class PackageIndexManager(models.Manager):
     def refresh_stale_indexes(self):
         stale = self.proxies().filter(last_update__lte=datetime.datetime.now()-UPDATE_FREQUENCY)
@@ -29,6 +34,13 @@ class PackageIndexManager(models.Manager):
     
     def proxies(self):
         return self.exclude(url="")
+    
+    def indexes_for_user(self, user):
+        ret = list()
+        for package_index in self.all():
+            if package_index.can_read(user):
+                ret.append(package_index)
+        return ret
 
 class PackageIndex(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -40,6 +52,9 @@ class PackageIndex(models.Model):
     
     def __unicode__(self):
         return self.name
+    
+    def can_read(self, user):
+        return user.has_perm('view_index', self)
     
     def get_scraper(self):
         return PackageIndexScraper(index_url=self.url)
@@ -79,6 +94,11 @@ class PackageIndex(models.Model):
     def populate_applications_and_packages(self):
         for application in self.populate_applications():
             self.populate_packages(application)
+    
+    class Meta:
+        permissions = (
+            ("view_index", "Can view packages from this index"),
+        )
 
 class Application(models.Model):
     name = models.CharField(max_length=50)
@@ -91,11 +111,19 @@ class Application(models.Model):
         ordering = ['name']
     
     @models.permalink
-    def get_absolute_url(self):
-        return ('packageindex.application_detail', [self.name], {})
+    def get_absolute_url(self, access_key=None):
+        if access_key:
+            return ('packageindex.keyed_application_detail',
+                    [],
+                    {'access_key':access_key,
+                     'name':self.name,})
+        else:
+            return ('packageindex.application_detail', [self.name], {})
     
-    def package_dictionary(self):
+    def package_dictionary(self, package_indexes=None):
         package_qs = self.package_set.filter(active=True)
+        if package_indexes is not None:
+            package_qs = package_qs.filter(package_index__in=package_indexes)
         #filter by Package Index with highest priority
         packages = dict()
         for package in package_qs:
@@ -117,7 +145,7 @@ class Application(models.Model):
             except ApplicationUpdate.DoesNotExist:
                 package_index.populate_packages(self)
             else:
-                if app_update.last_update < UPDATE_FREQUENCY:
+                if app_update.last_update < cutoff:
                     package_index.populate_packages(self)
 
 class ApplicationUpdate(models.Model):
@@ -157,8 +185,14 @@ class Package(models.Model):
         ordering = ['-order']
     
     @models.permalink
-    def get_counting_download_url(self):
-        return ('packageindex.download_package', [self.pk], {})
+    def get_counting_download_url(self, access_key=None):
+        if access_key:
+            return ('packageindex.keyed_download_package',
+                    [],
+                    {'access_key':access_key,
+                     'object_id':self.pk,})
+        else:
+            return ('packageindex.download_package', [self.pk], {})
     
     def get_download_url(self):
         if self.download:

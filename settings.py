@@ -62,6 +62,12 @@ INSTALLED_APPS = (
     'django.contrib.sitemaps',
     'django.contrib.admindocs',
     'packageindex',
+    'guardian',
+)
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # default
+    'guardian.backends.ObjectPermissionBackend',
 )
 
 STATIC_URL = '/static/'
@@ -82,3 +88,5 @@ DATABASE_HOST = ''
 DATABASE_PORT = ''
 
 SITE_ID = 1
+
+ANONYMOUS_USER_ID = 0
