@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.db.models import F
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404
 
 from models import Application, Package, PackageIndex, PackageAccessKey
 
@@ -46,9 +46,15 @@ def application_detail(request, name, access_key):
                                'access_key':access_key,})
 
 @access_key_view
-def download_package(request, object_id, access_key):
-    package = get_object_or_404(Package, pk=object_id)
-    if not package.package_index.can_read(request.user):
+def download_package(request, name, title, access_key):
+    packages = get_list_or_404(Package, title=title, application__name=name)
+    package = None
+    for candidate_package in packages:
+        if not candidate_package.package_index.can_read(request.user):
+            continue
+        if not package or candidate_package.package_index.priority > package.package_index.priority:
+            package = candidate_package
+    if not package:
         return HttpResponseForbidden('Cannot download this package')
-    Package.objects.filter(pk=object_id).update(downloads=F('downloads')+1)
+    Package.objects.filter(pk=package.pk).update(downloads=F('downloads')+1)
     return HttpResponseRedirect(package.get_download_url())

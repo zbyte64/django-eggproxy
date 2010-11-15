@@ -101,7 +101,7 @@ class PackageIndex(models.Model):
         )
 
 class Application(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
     
     def __unicode__(self):
@@ -190,9 +190,13 @@ class Package(models.Model):
             return ('packageindex.keyed_download_package',
                     [],
                     {'access_key':access_key,
-                     'object_id':self.pk,})
+                     'name':self.application.name,
+                     'title':self.title,})
         else:
-            return ('packageindex.download_package', [self.pk], {})
+            return ('packageindex.download_package',
+                    [],
+                    {'name':self.application.name,
+                     'title':self.title,})
     
     def get_download_url(self):
         if self.download:
