@@ -49,13 +49,15 @@ class ActionErrorList(forms.util.ErrorList):
 def edit_permissions(modeladmin, request, queryset): #TODO this does not work
     opts = modeladmin.model._meta
     app_label = opts.app_label
-
     # Check that the user has the permission to edit permissions
     if not (request.user.is_superuser or
             request.user.has_perm('guardian.change_permission') or
             request.user.has_perm('guardian.change_foreign_permissions')):
         raise PermissionDenied
-
+    actions = modeladmin.get_actions(request)
+    if hasattr(actions, 'keys'):
+        actions = actions.keys()
+    action_index = actions.index('edit_permissions')
     inline = UserActionPermissionInline(queryset.model, modeladmin.admin_site)
     formsets = []
     for obj in queryset:
@@ -105,6 +107,7 @@ def edit_permissions(modeladmin, request, queryset): #TODO this does not work
         'is_popup': False,
         'media': mark_safe(media),
         'show_delete': False,
+        'action_index': action_index,
         'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
         'queryset': queryset,
         "object_name": force_unicode(opts.verbose_name),
@@ -118,5 +121,5 @@ def edit_permissions(modeladmin, request, queryset): #TODO this does not work
                               context_instance=template.RequestContext(request))
 edit_permissions.short_description = _("Edit permissions for selected %(verbose_name_plural)s")
 
-#admin.site.add_action(edit_permissions, 'edit_permissions')
+admin.site.add_action(edit_permissions, 'edit_permissions')
 
