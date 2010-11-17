@@ -30,7 +30,7 @@ class PackageIndexManager(models.Manager):
     def refresh_stale_indexes(self):
         stale = self.proxies().filter(last_update__lte=datetime.datetime.now()-UPDATE_FREQUENCY)
         for package_index in stale:
-            stale.populate_applications()
+            package_index.populate_applications()
     
     def proxies(self):
         return self.exclude(url="")
