@@ -26,7 +26,11 @@ def application_list(request, access_key):
 
 @access_key_view
 def application_detail(request, name, access_key):
-    application = get_object_or_404(Application, name=name)
+    try:
+        application = Application.objects.get(name=name)
+    except Application.DoesNotExist:
+        application = get_object_or_404(Application, name__iexact=name)
+        return HttpResponseRedirect(application.get_absolute_url(access_key))
     #TODO make on the fly fetch packages togable
     application.refresh_stale_packages()
     package_indexes = PackageIndex.objects.indexes_for_user(request.user)
